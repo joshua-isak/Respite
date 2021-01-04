@@ -31,7 +31,7 @@
                 "engine/src/level.cpp",
                 "engine/src/main.cpp",
                 "respite/entities/player/player.cpp",
-                "respite/levels/level0.cpp",
+                "respite/levels/level0/level0.cpp",
                 "-o",
                 "respite.exe"
 

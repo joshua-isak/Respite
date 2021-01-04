@@ -10,8 +10,7 @@
 #include "level.h"
 
 // Custom stuff, should ideally not be here
-#include "respite/entities/player/player.h"
-#include "respite/levels/level0.cpp"
+#include "respite/respite.h"
 
 
 using namespace std;
@@ -47,7 +46,7 @@ int main(int argc, char *argv[]) {
 
     // Add a player entity to the level
     // Player p;
-    // current_level.addEntity(&p);
+    // (*current_level).addEntity(&p);
 
 
     printf("starting game loop\n");
