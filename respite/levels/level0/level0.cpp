@@ -4,10 +4,6 @@
 
 
 void Level0::init() {
-    // Player p;
-    // addEntity(&p);
-    // p.x = 7;
-    // p.y = 8;
 
     Player *p = new Player;
 
@@ -17,4 +13,7 @@ void Level0::init() {
     printf("x:%f y:%f\n", p->x, p->y);
 
     addEntity(p);
+
+    Player *p2 = new Player;
+    delete p2;
 }

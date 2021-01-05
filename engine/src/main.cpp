@@ -21,7 +21,6 @@ using namespace std;
 void update(Level *lvl) {
     // Dereference the level to be updated
     Level l = *lvl;
-    
 
     // Iterate through each entity in the level and run their update function
     list<Entity*>::iterator it;
@@ -34,7 +33,7 @@ void update(Level *lvl) {
 
 int main(int argc, char *argv[]) {
     // Engine parameters
-    int tickrate = 5; // Simulation speed
+    int tickrate = 2; // Simulation speed
 
     // Engine variables
     Level *current_level;    // Current level to simulate and display
