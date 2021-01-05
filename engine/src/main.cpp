@@ -21,6 +21,7 @@ using namespace std;
 void update(Level *lvl) {
     // Dereference the level to be updated
     Level l = *lvl;
+    
 
     // Iterate through each entity in the level and run their update function
     list<Entity*>::iterator it;
