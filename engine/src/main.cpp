@@ -8,6 +8,7 @@
 // Engine stuff
 #include "entity.h"
 #include "level.h"
+#include "window.h"
 
 // Custom stuff, should ideally not be here
 #include "respite/respite.h"
@@ -44,9 +45,14 @@ int main(int argc, char *argv[]) {
     level0.init();
     current_level = &level0;
 
-    // Add a player entity to the level
-    // Player p;
-    // (*current_level).addEntity(&p);
+    // Create the window
+    Window *window = new Window(640, 480, "Respite");
+    window->create();
+
+    Sleep(2000);
+
+    // Destroy the window
+    window->destroy();
 
 
     printf("starting game loop\n");
