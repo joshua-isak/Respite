@@ -21,4 +21,10 @@ public:
     // Destroy the window and terminate GLFW library
     void destroy();
 
+    // Return the state of a key
+    int getKeyState(int key);
+
 };
+
+// Corresponds 1 to 1 with GLFW_RELEASED and GLFW_PRESSED
+enum key_state {KEY_RELEASED, KEY_PRESSED};

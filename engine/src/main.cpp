@@ -15,6 +15,8 @@
 // Respite game stuff, should ideally not be here
 #include "respite/respite.h"
 
+// EXTERN MANAGERS
+#include "managers.h"
 
 using namespace std;
 
@@ -34,12 +36,11 @@ void update(Level *lvl) {
 }
 
 // Subsystem declarations
-Window window;
-
+Window window;                  // window manager
 
 int main(int argc, char *argv[]) {
     // Engine parameters
-    int tickrate = 2;           // simulation cycles per second
+    int tickrate = 60;          // simulation cycles per second
 
     // Engine variables
     Level *current_level;       // current level to simulate and display
@@ -54,7 +55,7 @@ int main(int argc, char *argv[]) {
     // Create the scene manager (replace above)
 
 
-    // Inigialize subsystems
+    // Initialize subsystems
     window.init(640, 480, "Respite");
 
 

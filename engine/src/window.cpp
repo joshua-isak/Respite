@@ -36,6 +36,17 @@ void Window::destroy() {
 
 
 void Window::processInput() {
-    // Get all the events from the input queue (ie keyCallback)
+    // Get all the events from the input queue and call them (ie keyCallback)
     glfwPollEvents();
+
+    int state = glfwGetKey(this_window, GLFW_KEY_E);
+
+    if (state == GLFW_PRESS) {
+        printf("The E key is being pressed\n");
+    }
+}
+
+
+int Window::getKeyState(int key) {
+    return glfwGetKey(this_window, key);
 }
