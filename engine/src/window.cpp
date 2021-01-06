@@ -1,26 +1,41 @@
 #include "window.h"
 
+#include <stdio.h>
 
-Window::Window(int window_height, int window_width, char const *window_name) {
-    height = window_height;
-    width = window_width;
-    name = window_name;
+
+void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+        printf("hey you pressed the escape key!\n");
+    }
 }
 
 
-void Window::create() {
+void Window::init(int window_height, int window_width, char const *window_name) {
+    height = window_height;
+    width = window_width;
+    name = window_name;
+
     // Initialize the GLFW library
     glfwInit();
 
     // Create the window
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    pane = glfwCreateWindow(height, width, name, nullptr, nullptr);
+    this_window = glfwCreateWindow(height, width, name, nullptr, nullptr);
+
+    // Set key_callback function
+    glfwSetKeyCallback(this_window, keyCallback);
 
 }
 
 
 void Window::destroy() {
     // Destroy the window and terminate the library
-    glfwDestroyWindow(pane);
+    glfwDestroyWindow(this_window);
     glfwTerminate();
+}
+
+
+void Window::processInput() {
+    // Get all the events from the input queue (ie keyCallback)
+    glfwPollEvents();
 }

@@ -1,16 +1,18 @@
 #include <iostream>
 #include <list>
 #include <iterator>
+#include <thread>
+#include <chrono>
 
 // Platform specific
-#include <Windows.h>
+//#include <Windows.h>
 
 // Engine stuff
 #include "entity.h"
 #include "level.h"
 #include "window.h"
 
-// Custom stuff, should ideally not be here
+// Respite game stuff, should ideally not be here
 #include "respite/respite.h"
 
 
@@ -31,13 +33,17 @@ void update(Level *lvl) {
     }
 }
 
+// Subsystem declarations
+Window window;
+
 
 int main(int argc, char *argv[]) {
     // Engine parameters
-    int tickrate = 2; // Simulation speed
+    int tickrate = 2;           // simulation cycles per second
 
     // Engine variables
-    Level *current_level;    // Current level to simulate and display
+    Level *current_level;       // current level to simulate and display
+    bool running = true;        // current engine state (false breaks main game loop)
 
 
     // Initialize level0 and set it as the current level
@@ -45,25 +51,28 @@ int main(int argc, char *argv[]) {
     level0.init();
     current_level = &level0;
 
-    // Create the window
-    Window *window = new Window(640, 480, "Respite");
-    window->create();
+    // Create the scene manager (replace above)
 
-    Sleep(2000);
 
-    // Destroy the window
-    window->destroy();
+    // Inigialize subsystems
+    window.init(640, 480, "Respite");
+
 
 
     printf("starting game loop\n");
 
     // Main game loop
-    while (true) {
+    while (running) {
 
-        //processInput();
+        window.processInput();
         update(current_level);
         //render();
 
-        Sleep(1000/tickrate);  //expand this to account for simulation lag and render lag
+        //expand this to account for simulation lag and render lag
+        this_thread::sleep_for(chrono::milliseconds(1000/tickrate));
     }
+
+    // Destroy the window
+    window.destroy();
+
 }

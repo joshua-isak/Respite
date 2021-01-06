@@ -4,17 +4,21 @@
 
 class Window {
 public:
-    GLFWwindow *pane;   //The GLFW window object
+    GLFWwindow *this_window;   //The GLFW window object
     const char *name;
     int height;
     int width;
 
-    // Constructor
-    Window(int window_height, int window_width, char const *window_name);
+    // Callback function for when a keyboard key is interacted with
+    static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-    // Create the window
-    void create();
+    // Process window events (callback functions)
+    void processInput();
 
-    // Destroy the window
+    // Create the window and initialize GLFW library
+    void init(int window_height, int window_width, char const *window_name);
+
+    // Destroy the window and terminate GLFW library
     void destroy();
+
 };
