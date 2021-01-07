@@ -3,7 +3,7 @@
 	"tasks": [
 		{
 			"type": "cppbuild",
-			"label": "C/C++: g++.exe build active file",
+			"label": "build active file",
 			"command": "C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/g++.exe",
 			"args": [
 				"-g",
@@ -22,7 +22,7 @@
         },
         {
 			"type": "cppbuild",
-			"label": "C++: g++.exe build entire game",
+			"label": "build engine",
 			"command": "C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/g++.exe",
 			"args": [
                 "-g",
@@ -47,7 +47,39 @@
 			],
 			"group": "build",
 			"detail": "compiler: \"C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/g++.exe\""
-        }
+		},
+		{
+			"type": "cppbuild",
+			"label": "build vulkan test",
+			"command": "C:\\Program Files\\mingw-w64\\x86_64-8.1.0-posix-seh-rt_v6-rev0\\mingw64\\bin\\g++.exe",
+			"args": [
+				"-g",
+
+				"-I.\\engine\\lib",
+				"-I.\\engine\\lib\\glm",
+				"-IC:\\VulkanSDK\\1.2.162.0\\Include",
+
+				"${workspaceFolder}\\main.cpp",
+				
+				".\\engine\\lib\\libglfw3.a",
+
+				"-LC:\\VulkanSDK\\1.2.162.0\\Lib\\",
+				"-lvulkan-1",
+
+				"-lgdi32",
+
+				"-o",
+				"${fileDirname}\\${fileBasenameNoExtension}.exe"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build",
+			"detail": "compiler: \"C:\\Program Files\\mingw-w64\\x86_64-8.1.0-posix-seh-rt_v6-rev0\\mingw64\\bin\\g++.exe\""
+		}
 	]
 }
 
