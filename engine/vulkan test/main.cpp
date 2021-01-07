@@ -74,19 +74,14 @@ private:
             createInfo.ppEnabledLayerNames = validationLayers.data();
         }
 
-
-        // check that this device has the Vulkan extensions to support GLFW
-        uint32_t glfwExtensionCount = 0;
-        const char** glfwExtensions;
-
-        glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
-        createInfo.enabledExtensionCount = glfwExtensionCount;
-        createInfo.ppEnabledExtensionNames = glfwExtensions;
+        
+        auto extensions = getRequiredExtensions();
+        createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+        createInfo.ppEnabledExtensionNames = extensions.data();
 
 
 
-        // retrieve list of all supported extensions
+        /* retrieve list of all supported extensions
         uint32_t extensionCount = 0;
         // get amount of extensions
         vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
@@ -98,7 +93,7 @@ private:
         std::cout << "available extensions:\n";
         for (std::vector<VkExtensionProperties>::iterator it = extensions.begin(); it != extensions.end(); ++it) {
             std::cout << '\t' << it->extensionName << '\n';
-        }
+        }*/
 
 
 
@@ -108,6 +103,25 @@ private:
 
     }
 
+    // return vector of required extensions, mainly glfw-required extensions and debug utils (if validation layers enabled)
+    std::vector<const char*> getRequiredExtensions() {
+        // check that this device has the Vulkan extensions to support GLFW
+        uint32_t glfwExtensionCount = 0;
+        const char** glfwExtensions;
+        glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+    
+        // instantiate extension return array with base of required glfwExtensions
+        std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+
+        // append validation layer extension to extension requirements if debug mode enabled
+        if (enableValidationLayers) {
+            extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+        }
+
+        return extensions;
+    }
+    
+    //check if all the validationLayers specified by program above class are in the availableLayers
     bool checkValidationLayerSupport() {
         uint32_t layerCount;
         vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -115,7 +129,6 @@ private:
         std::vector<VkLayerProperties> availableLayers(layerCount);
         vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
         
-        //check if all the validationLayers specified by program above class are in the availableLayers
         //namely the Khronos validationLayer provided by LunarG
 
         for (const char* layerName : validationLayers) {

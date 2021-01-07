@@ -3,7 +3,8 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "C:/VulkanSDK/1.2.162.0/Include"
             ],
             "defines": [
                 "_DEBUG",
@@ -13,7 +14,7 @@
             "compilerPath": "C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/g++.exe",
             "cStandard": "gnu17",
             "cppStandard": "gnu++14",
-            "intelliSenseMode": "msvc-x64"
+            "intelliSenseMode": "gcc-x64"
         },
         {
             "name": "UNIX",
@@ -30,10 +31,6 @@
             "cppStandard": "gnu++14",
             "intelliSenseMode": "gcc-x64",
             "compilerArgs": [],
-            "intelliSenseModeIsExplicit": true,
-            "cStandardIsExplicit": true,
-            "cppStandardIsExplicit": true,
-            "compilerPathIsExplicit": true,
             "browse": {
                 "path": [
                     "${workspaceFolder}/**"

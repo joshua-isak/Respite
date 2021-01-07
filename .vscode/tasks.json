@@ -56,12 +56,13 @@
 				"-g",
 
 				"-I.\\engine\\lib",
-				"-I.\\engine\\lib\\glm",
 				"-IC:\\VulkanSDK\\1.2.162.0\\Include",
 
-				"${workspaceFolder}\\main.cpp",
+				"${workspaceFolder}\\engine\\vulkan test\\main.cpp",
 				
-				".\\engine\\lib\\libglfw3.a",
+				"-L.\\engine\\lib",
+				"-lglfw3",
+				//"-lglm",
 
 				"-LC:\\VulkanSDK\\1.2.162.0\\Lib\\",
 				"-lvulkan-1",
