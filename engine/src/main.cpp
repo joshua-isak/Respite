@@ -11,6 +11,7 @@
 #include "entity.h"
 #include "level.h"
 #include "window.h"
+#include "world.h"
 
 // Respite game stuff, should ideally not be here
 #include "respite/respite.h"
@@ -35,8 +36,10 @@ void update(Level *lvl) {
     }
 }
 
-// Subsystem declarations
+// Manager declarations
 Window window;                  // window manager
+World world;                    // world manager
+
 
 int main(int argc, char *argv[]) {
     // Engine parameters
@@ -48,16 +51,19 @@ int main(int argc, char *argv[]) {
 
 
     // Initialize level0 and set it as the current level
-    Level0 level0;
-    level0.init();
-    current_level = &level0;
+    //Level0 level0;
+    //level0.init();
+    //current_level = &level0;
 
-    // Create the scene manager (replace above)
-
-
-    // Initialize subsystems
+    // Initialize Managers
     window.init(640, 480, "Respite");
+    world.init();
 
+
+    //////// CUSTOM GAME TEST CODE ////////
+    Player *p = new Player;
+    world.addEntity(1, p);
+    ///////////////////////////////////////
 
 
     printf("starting game loop\n");
@@ -66,14 +72,15 @@ int main(int argc, char *argv[]) {
     while (running) {
 
         window.processInput();
-        update(current_level);
+        //update(current_level);
+        world.update();
         //render();
 
         //expand this to account for simulation lag and render lag
         this_thread::sleep_for(chrono::milliseconds(1000/tickrate));
     }
 
-    // Destroy the window
+    // Destroy the window manager
     window.destroy();
 
 }

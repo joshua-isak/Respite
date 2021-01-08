@@ -23,6 +23,8 @@ public:
     float y = 0;        // y spatial coordinate
     float z = 0;        // z spatial coordinate
 
+    bool persistent;    // True to survive level changes
+
     box collisionBox;   // Collision "hitbox"
 
     // Run every tick
