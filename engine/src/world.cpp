@@ -37,6 +37,9 @@ Entity* World::checkEntityCollision(Entity *self, float x_pos, float y_pos, floa
 
         Entity *other = it->second;
 
+        // Don't check for a collision with ourselves
+        if (other == self) { continue; }
+
         point b_max = { other->collisionBox.p_highest.x + x_pos,
                         other->collisionBox.p_highest.y + y_pos,
                         other->collisionBox.p_highest.z + z_pos  };
