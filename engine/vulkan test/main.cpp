@@ -64,6 +64,29 @@ struct SwapChainSupportDetails {
 };
 
 
+#include <fstream>
+// binary file reader helper
+static std::vector<char> readFile(const std::string& filename) {
+    // ate - start from end of file - indicates filesize
+    // binary - read as binary and do not make encoding transformations
+    std::ifstream file(filename, std::ios::ate | std::ios::binary);
+
+    if (!file.is_open()) {
+        throw std::runtime_error("failed to open file!");
+    }
+
+    size_t fileSize = (size_t) file.tellg();
+    std::vector<char> buffer(fileSize);
+
+    file.seekg(0);
+    file.read(buffer.data(), fileSize);
+
+    file.close();
+
+    return buffer;
+}
+
+
 class HelloTriangleApplication {
 public:
     void run() {
@@ -104,6 +127,8 @@ private:
         createLogicalDevice();
         createSwapChain();
         createImageViews();
+
+        createGraphicsPipeline();
     }
 
     void createInstance() {
@@ -605,6 +630,56 @@ private:
                 throw std::runtime_error("failed to create image views!");
             }
         }
+    }
+
+
+    // finally!
+    void createGraphicsPipeline() {
+        auto vertShaderCode = readFile("shaders/vert.spv");
+        auto fragShaderCode = readFile("shaders/frag.spv");
+
+        // lifetime = up to compilation/creation of graphics pipeline, then they can be destroyed
+        // therefore they are local vars not class members
+        VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
+        VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
+
+        // create shader stages
+        // other interesting attributes like pnext exist for this struct. check docs
+        VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+        vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+        vertShaderStageInfo.module = vertShaderModule;
+        vertShaderStageInfo.pName = "main"; // entrypoint - function to invoke
+        // other useful attributes include specialization info, where one can specify
+        // constant values used in the code, which the code is then optimized for (for example if there are if statements involving the constant)
+
+        VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+        fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+        fragShaderStageInfo.module = fragShaderModule;
+        fragShaderStageInfo.pName = "main";
+
+        VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+
+
+        vkDestroyShaderModule(device, fragShaderModule, nullptr);
+        vkDestroyShaderModule(device, vertShaderModule, nullptr);
+    }
+
+    // VKShaderModule - light wrapper over shader bytecode for pipeline creation
+    // generate shader module helper from bytecode
+    VkShaderModule createShaderModule(const std::vector<char>& code) {
+            VkShaderModuleCreateInfo createInfo{};
+            createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+            createInfo.codeSize = code.size();
+            createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+
+            VkShaderModule shaderModule;
+            if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create shader module!");
+            }
+
+            return shaderModule;
     }
 
 
