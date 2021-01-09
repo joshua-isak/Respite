@@ -27,14 +27,15 @@
 			"args": [
                 "-g",
                 "-I.",
-                "engine/src/entity.cpp",
+				"engine/src/entity.cpp",
 				"engine/src/level.cpp",
 				"engine/src/world.cpp",
                 "engine/src/main.cpp",
                 "engine/src/window.cpp",
                 "engine/lib/libglfw3.a",
                 "-lgdi32",
-                "respite/entities/player/player.cpp",
+				"respite/entities/player/player.cpp",
+				"respite/entities/thing/thing.cpp",
                 "respite/levels/level0/level0.cpp",
                 "-o",
                 "respite.exe"

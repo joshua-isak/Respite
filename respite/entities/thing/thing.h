@@ -3,12 +3,11 @@
 #pragma once
 
 // Entity that is used to control the player
-class Player: public Entity {
+class Thing: public Entity {
 public:
-    float move_speed = 0.1;     // x y movement speed
 
     // Constructor
-    Player();
+    Thing();
 
     // Run every tick
     void update();
