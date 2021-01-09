@@ -11,9 +11,20 @@ void Player::update() {
     // Print current x y coordinates
     printf("Pos x: %f, y:%f\n", x, y);
 
-    // Process keyboard input
-    if (window.getKeyState((int)'W') == KEY_PRESSED) { x -= 0.2; }
-    if (window.getKeyState((int)'A') == KEY_PRESSED) { y -= 0.2; }
-    if (window.getKeyState((int)'S') == KEY_PRESSED) { x += 0.2; }
-    if (window.getKeyState((int)'D') == KEY_PRESSED) { y += 0.2; }
+    float next_x = x;
+    float next_y = y;
+    float next_z = z;
+
+    // Process movement input
+    if (window.getKeyState((int)'W') == KEY_PRESSED) { next_x -= move_speed; }
+    if (window.getKeyState((int)'A') == KEY_PRESSED) { next_y -= move_speed; }
+    if (window.getKeyState((int)'S') == KEY_PRESSED) { next_x += move_speed; }
+    if (window.getKeyState((int)'D') == KEY_PRESSED) { next_y += move_speed; }
+
+    // Check if place to move to is not occupied
+    if (world.checkEntityCollision(this, next_x, next_y, next_z) == nullptr) {
+        x = next_x;
+        y = next_y;
+        z = next_z;
+    }
 }

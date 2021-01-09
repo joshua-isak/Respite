@@ -56,14 +56,12 @@ int main(int argc, char *argv[]) {
 
     //////// CUSTOM GAME TEST CODE ////////
     Player *p = new Player;
-    p->x = 10;
-    p->y = 10;
+    p->x = 2;
+    p->y = 2;
     world.addEntity(1, p);
 
     Thing *t = new Thing;
     world.addEntity(2, t);
-
-
     ///////////////////////////////////////
 
 
@@ -73,7 +71,6 @@ int main(int argc, char *argv[]) {
     while (running) {
 
         window.processInput();
-        //update(current_level);
         world.update();
         //render();
 
