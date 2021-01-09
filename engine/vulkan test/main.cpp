@@ -15,6 +15,10 @@ const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
 };
 
+const std::vector<const char*> deviceExtensions = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME // availability of this extension is implied by availability of presentation queue
+};
+
 #ifdef NDEBUG
     const bool enableValidationLayers = false;
 #else
@@ -276,14 +280,17 @@ private:
         VkPhysicalDeviceFeatures deviceFeatures;
         vkGetPhysicalDeviceProperties(device, &deviceProperties);
         vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
-        
         printf(deviceProperties.deviceName);*/
 
-        // do we have graphics queue families support on this device?
+        // do we have graphics / presentation queue families support on this device?
         QueueFamilyIndices indices = findQueueFamilies(device);
 
+
+        // do we have swapchain extension support for image presentation
+        bool extensionsSupported = checkDeviceExtensionSupport(device);
+
         //return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader;
-        return indices.isComplete();
+        return indices.isComplete() && extensionsSupported;
     }
 
     // Find / verify support for required queue families
@@ -319,6 +326,26 @@ private:
         }
         return indices;
     }
+
+    // compare vulkan detected extension support for devices to our required extension support
+    bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
+        uint32_t extensionCount;
+        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+        std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+
+        // our hard-coded requirements (swapchain extension)
+        std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
+
+        // erase requirements we support
+        for (const auto& extension : availableExtensions) {
+            requiredExtensions.erase(extension.extensionName);
+        }
+
+        // any not supported, which are left?
+        return requiredExtensions.empty();
+    }
+
 
     void createLogicalDevice() {
         // first specify validated queues that we would like to enable
