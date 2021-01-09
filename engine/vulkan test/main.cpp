@@ -79,9 +79,13 @@ private:
     VkDebugUtilsMessengerEXT debugMessenger; // manual destroy
     VkSurfaceKHR surface; // manual destroy - Vulkan window interface extension surface
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE; // implicit destruction with destruction of instance
-    VkDevice device; // logical device to interface with the physical device
+    VkDevice device; // logical device to interface with the physical device - destroy manually
     VkQueue presentQueue; // queue to control presentation of rendered data (swap chain stuff)
     VkSwapchainKHR swapChain; // destroy before logical device (created with logical device)
+    std::vector<VkImage> swapChainImages; // automatically cleaned when the swap chain is destoryed
+    VkFormat swapChainImageFormat; // image format we will chose for swapchain based on our preference
+    VkExtent2D swapChainExtent; // swapchain image extent we will have selected based on the constraints
+    std::vector<VkImageView> swapChainImageViews; // allocated and managed by us. destroy before destruction of logical device
 
     void initWindow() {
         glfwInit();
@@ -99,6 +103,7 @@ private:
         pickPhysicalDevice();
         createLogicalDevice();
         createSwapChain();
+        createImageViews();
     }
 
     void createInstance() {
@@ -145,19 +150,19 @@ private:
 
 
 
-        /* retrieve list of all supported extensions
+        // retrieve list of all supported extensions
         uint32_t extensionCount = 0;
         // get amount of extensions
         vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
         // create an appropriately sized object to record extensions
-        std::vector<VkExtensionProperties> extensions(extensionCount);
+        std::vector<VkExtensionProperties> allExtensionsList(extensionCount);
         // call again, this time retrieving extension information
-        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
+        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, allExtensionsList.data());
         // print the extensions
         std::cout << "available extensions:\n";
-        for (std::vector<VkExtensionProperties>::iterator it = extensions.begin(); it != extensions.end(); ++it) {
+        for (std::vector<VkExtensionProperties>::iterator it = allExtensionsList.begin(); it != allExtensionsList.end(); ++it) {
             std::cout << '\t' << it->extensionName << '\n';
-        }*/
+        }
 
 
 
@@ -418,8 +423,10 @@ private:
         SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
 
         VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
+        swapChainImageFormat = surfaceFormat.format; // store as class member for later use
         VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
         VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
+        swapChainExtent = extent; // store as class member for later use
 
 
         // now create the swapchain after we have selected the parameters!
@@ -476,6 +483,12 @@ private:
         if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
             throw std::runtime_error("failed to create swap chain!");
         }
+
+
+        // retrieve images
+        vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
+        swapChainImages.resize(imageCount);
+        vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
     }
 
     // query swapchain capabilities
@@ -562,6 +575,37 @@ private:
         }
     }
 
+    // create image views for each of the swap chain images. this defines/creates access to the images
+    void createImageViews() {
+        // resize default init class member to fit # of swapchain images
+        swapChainImageViews.resize(swapChainImages.size());
+
+        // populate image view create structs for each required swapchain image view
+        for (size_t i = 0; i < swapChainImages.size(); i++) {
+            VkImageViewCreateInfo createInfo{};
+            createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            createInfo.image = swapChainImages[i];
+            createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D; // among options like 1D, 3D
+            createInfo.format = swapChainImageFormat; // previously evaluated/queried best supported format
+        
+            // color swizzle mappings - identity chosen (default) - can otherwise move colors around
+            createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+            createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+            createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+            createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+            // no mipmaps or layers to swapchain images
+            createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            createInfo.subresourceRange.baseMipLevel = 0;
+            createInfo.subresourceRange.levelCount = 1;
+            createInfo.subresourceRange.baseArrayLayer = 0;
+            createInfo.subresourceRange.layerCount = 1;
+
+            if (vkCreateImageView(device, &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create image views!");
+            }
+        }
+    }
 
 
     void mainLoop() {
@@ -571,6 +615,11 @@ private:
     }
 
     void cleanup() {
+        // destroy self-allocated image views of swapchain images
+        for (auto imageView : swapChainImageViews) {
+            vkDestroyImageView(device, imageView, nullptr);
+        }
+
         // destroy swapchain
         vkDestroySwapchainKHR(device, swapChain, nullptr);
 
