@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <vector>
 #include <cstring>
+#include <set>
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
@@ -42,38 +43,13 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 #include <optional>
 
 struct QueueFamilyIndices {
-    std::optional<uint32_t> graphicsFamily;
+    std::optional<uint32_t> graphicsFamily;// v
+    std::optional<uint32_t> presentFamily; // these two may be the same queue for certain devices
 
     bool isComplete() {
-        return graphicsFamily.has_value();
+        return graphicsFamily.has_value() && presentFamily.has_value();
     }
 };
-
-// Find / verify support for required queue families
-QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
-    QueueFamilyIndices indices;
-
-    uint32_t queueFamilyCount = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
-
-    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-
-    int i = 0;
-    for (const auto& queueFamily : queueFamilies) {
-        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-            indices.graphicsFamily = i;
-        }
-
-        if (indices.isComplete()) {
-            break;
-        }
-
-        i++;
-    }
-
-    return indices;
-}
 
 
 class HelloTriangleApplication {
@@ -89,8 +65,10 @@ private:
     GLFWwindow* window; // manual destroy
     VkInstance instance; // manual destroy
     VkDebugUtilsMessengerEXT debugMessenger; // manual destroy
+    VkSurfaceKHR surface; // manual destroy - Vulkan window interface extension surface
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE; // implicit destruction with destruction of instance
     VkDevice device; // logical device to interface with the physical device
+    VkQueue presentQueue; // queue to control presentation of rendered data (swap chain stuff)
 
     void initWindow() {
         glfwInit();
@@ -104,6 +82,7 @@ private:
     void initVulkan() {
         createInstance();
         setupDebugMessenger();
+        createSurface();
         pickPhysicalDevice();
         createLogicalDevice();
     }
@@ -174,24 +153,6 @@ private:
 
     }
 
-    // return vector of required extensions, mainly glfw-required extensions and debug utils (if validation layers enabled)
-    std::vector<const char*> getRequiredExtensions() {
-        // check that this device has the Vulkan extensions to support GLFW
-        uint32_t glfwExtensionCount = 0;
-        const char** glfwExtensions;
-        glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-    
-        // instantiate extension return array with base of required glfwExtensions
-        std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
-
-        // append validation layer extension to extension requirements if debug mode enabled
-        if (enableValidationLayers) {
-            extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-        }
-
-        return extensions;
-    }
-
     //check if all the validationLayers specified by program above class are in the availableLayers
     bool checkValidationLayerSupport() {
         uint32_t layerCount;
@@ -220,6 +181,25 @@ private:
         return true;
     }
 
+    // return vector of required extensions, mainly glfw-required extensions and debug utils (if validation layers enabled)
+    // such extensions include VK - window surface interface extension
+    std::vector<const char*> getRequiredExtensions() {
+        // check that this device has the Vulkan extensions to support GLFW
+        uint32_t glfwExtensionCount = 0;
+        const char** glfwExtensions;
+        glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount); // includes extensions such as VK_KHR_win32_surface, necessary for surface creation
+    
+        // instantiate extension return array with base of required glfwExtensions
+        std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+
+        // append validation layer extension to extension requirements if debug mode enabled
+        if (enableValidationLayers) {
+            extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+        }
+
+        return extensions;
+    }
+
 
     // setup runtime debug
     void setupDebugMessenger() {
@@ -233,6 +213,8 @@ private:
         }
     }
 
+    // utilized twice, first to special create messenger for vulkan instance creation debugging
+    // second for runtime debugging
     void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
         createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -258,26 +240,31 @@ private:
         return VK_FALSE;
     }
 
+    // there are platform specific versions for this implementation which can conveniently be covered with glfw
+    void createSurface() {
+        if (glfwCreateWindowSurface(instance, window, nullptr, &surface));
+    }
+
 
     void pickPhysicalDevice() {
-        // first enumerate devices
+        // first enumerate devices, record amount
         uint32_t deviceCount = 0;
         vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
-
         if (deviceCount == 0) {
             throw std::runtime_error("failed to find GPUs with Vulkan support!");
         }
-
+        // populate dynamic size array of devices with amount / info specified via vulkan fn
         std::vector<VkPhysicalDevice> devices(deviceCount);
         vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
+        // check if we have a device that meets our requirements. choose the first such
         for (const auto& device : devices) {
             if (isDeviceSuitable(device)) {
                 physicalDevice = device;
                 break;
             }
         }
-
+        // if there are none, throw error.
         if (physicalDevice == VK_NULL_HANDLE) {
             throw std::runtime_error("failed to find a suitable GPU!");
         }
@@ -285,52 +272,100 @@ private:
 
     // extend as features are required
     bool isDeviceSuitable(VkPhysicalDevice device) {
-        VkPhysicalDeviceProperties deviceProperties;
+        /*VkPhysicalDeviceProperties deviceProperties;
         VkPhysicalDeviceFeatures deviceFeatures;
         vkGetPhysicalDeviceProperties(device, &deviceProperties);
         vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
         
-        printf(deviceProperties.deviceName);
+        printf(deviceProperties.deviceName);*/
 
         // do we have graphics queue families support on this device?
-        QueueFamilyIndices indices = findQueueFamilies();
+        QueueFamilyIndices indices = findQueueFamilies(device);
 
         //return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader;
         return indices.isComplete();
     }
 
+    // Find / verify support for required queue families
+    // indeed, this function is actually called twice by the program so far, once in isDeviceSuitable and once for the logical device creation in createLogicalDevice()
+    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
+        QueueFamilyIndices indices;
+
+        // query and then record queue support / availability for device
+        uint32_t queueFamilyCount = 0;
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+        std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+        // cycle through the results and compare to hard-coded requirements based on eventual render usage
+        int i = 0;
+        for (const auto& queueFamily : queueFamilies) {
+            if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+                indices.graphicsFamily = i;
+            }
+
+            VkBool32 presentSupport = false;
+            // can the surface be presented to from the device?
+            vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+            if (presentSupport) {
+                indices.presentFamily = i;
+            }
+
+            if (indices.isComplete()) {
+                break;
+            }
+
+            i++;
+        }
+        return indices;
+    }
 
     void createLogicalDevice() {
+        // first specify validated queues that we would like to enable
         QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+        
 
-        VkDeviceQueueCreateInfo queueCreateInfo{};
-        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
-        queueCreateInfo.queueCount = 1;
-
+        // populating queue create info structs with our queue requirements (currently graphical and present queue)
+        std::vector<VkDeviceQueueCreateInfo> queueCreateInfos{};
+        // put required queue indices into a set to eliminate duplicates / overlap (e.g. potential graphics / present queue overlap)
+        std::set<uint32_t> uniqueQueueFamilyIndices = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+        
         float queuePriority = 1.0f; // choose a value between 0 and 1 to influence execution scheduling
-        queueCreateInfo.pQueuePriorities = &queuePriority;
+        for (uint32_t queueFamily : uniqueQueueFamilyIndices) {
+            VkDeviceQueueCreateInfo queueCreateInfo{};
+            queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            queueCreateInfo.queueFamilyIndex = queueFamily;
+            queueCreateInfo.queueCount = 1; // request creation of just 1 queue per family (if they overlap, just one is created overall)
+            queueCreateInfo.pQueuePriorities = &queuePriority;
 
+            queueCreateInfos.push_back(queueCreateInfo);
+        }
 
-        // specify set of device features that will be used
+        // specify set of device features that will be used in this struct - currently unused / default
         VkPhysicalDeviceFeatures deviceFeatures{};
-        
-        
-        // logical device creation struct
+
+
+        // main logical device creation struct
         VkDeviceCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
-        createInfo.pQueueCreateInfos = &queueCreateInfo; // each queue create info has a pnext, in case more queues need to be specified
-        createInfo.queueCreateInfoCount = 1;
-        
+        // link information to enable desired queues to logical existence
+        createInfo.pQueueCreateInfos = queueCreateInfos.data(); // each queue create info has a pnext, in case more queues need to be specified
+        createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+
         createInfo.pEnabledFeatures = &deviceFeatures;
 
-        // device specific validation layers are deprecated, 0 enabled
+        // device-specific validation layers are deprecated. they are only supported for instances, not logical devices. 0 enabled
         createInfo.enabledExtensionCount = 0;
 
+        // create the logical device
         if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
             throw std::runtime_error("failed to create logical device!");
         }
+
+        // attempt to retrieve a queue!
+        // there's only one possible queue we requested that we can retrieve form the logical device for the presentation family
+        vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
     }
 
 
@@ -349,6 +384,9 @@ private:
         if (enableValidationLayers) {
             DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
         }
+
+        // destroy surface - must be destroyed before instance
+        vkDestroySurfaceKHR(instance, surface, nullptr);
 
         // destroy instance, implicit destruction of physical device
         vkDestroyInstance(instance, nullptr);
