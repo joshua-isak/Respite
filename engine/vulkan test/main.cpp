@@ -110,6 +110,10 @@ private:
     VkExtent2D swapChainExtent; // swapchain image extent we will have selected based on the constraints
     std::vector<VkImageView> swapChainImageViews; // allocated and managed by us. destroy before destruction of logical device
 
+    VkRenderPass renderPass; // must be destroyed before logical device destruction
+    VkPipelineLayout pipelineLayout; // destroy at end of program before logical device
+    VkPipeline graphicsPipeline;
+
     void initWindow() {
         glfwInit();
 
@@ -128,6 +132,7 @@ private:
         createSwapChain();
         createImageViews();
 
+        createRenderPass();
         createGraphicsPipeline();
     }
 
@@ -632,8 +637,49 @@ private:
         }
     }
 
+    
+ 
+    void createRenderPass() {
+        VkAttachmentDescription colorAttachment{};
+        colorAttachment.format = swapChainImageFormat; // same as eventual target!
+        colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT; // no multisampling yet
+        colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR; // clear prev. frame
+        colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE; // store into frame
+    
+        colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE; // not using yet
 
-    // finally!
+        colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // other layouts optimize memory transfer and others ...
+        // have image ready for swapchain presentation at end of pass
+
+
+        // subpasses
+        // all subsequently operate on same frame buffers for a pass
+        // attachment reference is the way in which the data from the frame buffer is piped ?
+        VkAttachmentReference colorAttachmentRef{};
+        colorAttachmentRef.attachment = 0;
+        colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        VkSubpassDescription subpass{};
+        subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        subpass.colorAttachmentCount = 1;
+        subpass.pColorAttachments = &colorAttachmentRef;
+        // ^ there's only one attachment as used in the fragment shader
+        // other attachments include depthstencil attachments
+
+        VkRenderPassCreateInfo renderPassInfo{};
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+        renderPassInfo.attachmentCount = 1;
+        renderPassInfo.pAttachments = &colorAttachment;
+        renderPassInfo.subpassCount = 1;
+        renderPassInfo.pSubpasses = &subpass;
+
+        if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create render pass!");
+        }
+    }
+
+
     void createGraphicsPipeline() {
         // programmable part of pipeline specification
         auto vertShaderCode = readFile("shaders/vert.spv");
@@ -670,7 +716,7 @@ private:
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertexInputInfo.vertexBindingDescriptionCount = 0;
-        vertexInputInfo.pVertexBindingDescriptions = nullptr
+        vertexInputInfo.pVertexBindingDescriptions = nullptr;
         vertexInputInfo.vertexAttributeDescriptionCount = 0;
         vertexInputInfo.pVertexAttributeDescriptions = nullptr;
 
@@ -735,9 +781,6 @@ private:
         multisampling.alphaToCoverageEnable = VK_FALSE;
         multisampling.alphaToOneEnable = VK_FALSE;
 
-        vkDestroyShaderModule(device, fragShaderModule, nullptr);
-        vkDestroyShaderModule(device, vertShaderModule, nullptr);
-
 
         // no depth / stencil testing yet, later for shadows
 
@@ -789,6 +832,47 @@ private:
         pipelineLayoutInfo.pushConstantRangeCount = 0; // ''
         pipelineLayoutInfo.pPushConstantRanges = nullptr; // ''
 
+        if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create pipeline layout!");
+        }
+
+
+        // put it all together!
+        VkGraphicsPipelineCreateInfo pipelineInfo{};
+        pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+        // shader stage specs
+        pipelineInfo.stageCount = 2;
+        pipelineInfo.pStages = shaderStages;
+
+        // fixed function stage specs
+        pipelineInfo.pVertexInputState = &vertexInputInfo;
+        pipelineInfo.pInputAssemblyState = &inputAssembly;
+        pipelineInfo.pViewportState = &viewportState;
+        pipelineInfo.pRasterizationState = &rasterizer;
+        pipelineInfo.pMultisampleState = &multisampling;
+        pipelineInfo.pDepthStencilState = nullptr; // optional
+        pipelineInfo.pColorBlendState = &colorBlending;
+        pipelineInfo.pDynamicState = nullptr; // optional
+
+        pipelineInfo.layout = pipelineLayout;
+
+        pipelineInfo.renderPass = renderPass;
+        pipelineInfo.subpass = 0;
+
+        // look into pipeline compatibility
+
+        // faster way to create pipelines reusing parts. must research
+        pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+        pipelineInfo.basePipelineIndex = -1;
+
+        if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create graphics pipeline!");
+        }
+
+
+        // THIS HAS TO HAPPEn AFTER PIPELInE CREATIOn
+        vkDestroyShaderModule(device, fragShaderModule, nullptr);
+        vkDestroyShaderModule(device, vertShaderModule, nullptr);
 
     }
 
@@ -816,6 +900,10 @@ private:
     }
 
     void cleanup() {
+        vkDestroyPipeline(device, graphicsPipeline, nullptr);
+        vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+        vkDestroyRenderPass(device, renderPass, nullptr);
+
         // destroy self-allocated image views of swapchain images
         for (auto imageView : swapChainImageViews) {
             vkDestroyImageView(device, imageView, nullptr);
