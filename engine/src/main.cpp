@@ -49,12 +49,6 @@ int main(int argc, char *argv[]) {
     Level *current_level;       // current level to simulate and display
     bool running = true;        // current engine state (false breaks main game loop)
 
-
-    // Initialize level0 and set it as the current level
-    //Level0 level0;
-    //level0.init();
-    //current_level = &level0;
-
     // Initialize Managers
     window.init(640, 480, "Respite");
     world.init();
@@ -62,7 +56,14 @@ int main(int argc, char *argv[]) {
 
     //////// CUSTOM GAME TEST CODE ////////
     Player *p = new Player;
+    p->x = 10;
+    p->y = 10;
     world.addEntity(1, p);
+
+    Thing *t = new Thing;
+    world.addEntity(2, t);
+
+
     ///////////////////////////////////////
 
 

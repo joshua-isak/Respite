@@ -7,11 +7,10 @@ struct point {
     float z = 0;
 };
 
-// A rectuangular prism defined by 3 points in 3D space
+// A rectuangular prism defined by 2 points in 3D space
 struct box {
-    point p1;
-    point p2;
-    point p3;
+    point p_highest;
+    point p_lowest;
 };
 
 
@@ -25,7 +24,7 @@ public:
 
     bool persistent;    // True to survive level changes
 
-    box collisionBox;   // Collision "hitbox"
+    box collisionBox;   // Collision "hitbox". Defined by coordinates relative to entity's x,y,z
 
     // Run every tick
     virtual void update();

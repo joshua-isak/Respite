@@ -5,6 +5,7 @@
 
 // Entities
 #include "entities/player/player.h"
+#include "entities/thing/thing.h"
 
 // Levels
 #include "levels/level0/level0.h"

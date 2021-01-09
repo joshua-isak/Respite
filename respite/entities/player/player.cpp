@@ -3,7 +3,11 @@
 
 #include <iostream>
 
-void Player::update(){
+Player::Player() {
+    collisionBox = {{1,1,1}, {-1,-1,-1}};
+}
+
+void Player::update() {
     // Print current x y coordinates
     printf("Pos x: %f, y:%f\n", x, y);
 

@@ -3,11 +3,11 @@
 #pragma once
 
 // Entity that is used to control the player
-class Player: public Entity {
+class Thing: public Entity {
 public:
 
     // Constructor
-    Player();
+    Thing();
 
     // Run every tick
     void update();

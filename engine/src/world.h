@@ -27,6 +27,9 @@ public:
     // Add an entity to the world
     void addEntity (int id, Entity *e);
 
+    // Returns the entity that entity self is colliding with at position x y z
+    Entity* checkEntityCollision(Entity *self, float x, float y, float z);
+
     // Destroy an entity of a given id
     void destroyEntity(int id);
 };
