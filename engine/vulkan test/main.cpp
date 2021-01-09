@@ -635,6 +635,7 @@ private:
 
     // finally!
     void createGraphicsPipeline() {
+        // programmable part of pipeline specification
         auto vertShaderCode = readFile("shaders/vert.spv");
         auto fragShaderCode = readFile("shaders/frag.spv");
 
@@ -662,8 +663,133 @@ private:
         VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 
 
+
+        // fixed function part pipeline specification
+
+        // vertex data input format specification. currently, none
+        VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+        vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        vertexInputInfo.vertexBindingDescriptionCount = 0;
+        vertexInputInfo.pVertexBindingDescriptions = nullptr
+        vertexInputInfo.vertexAttributeDescriptionCount = 0;
+        vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+
+
+        // input assembly
+        // standard - triangles
+        VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
+        inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+        inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        inputAssembly.primitiveRestartEnable = VK_FALSE; // (?) - allows for certain features
+
+
+        // viewport -- casts/describes transformation from image to framebuffer
+        VkViewport viewport{};
+        viewport.x = 0.0f;
+        viewport.y = 0.0f;
+        viewport.width = (float) swapChainExtent.width;
+        viewport.height = (float) swapChainExtent.height;
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+        // scissor
+        // draw to entire framebuffer - don't cut anything
+        VkRect2D scissor{};
+        scissor.offset = {0, 0};
+        scissor.extent = swapChainExtent;
+        // populate struct
+        VkPipelineViewportStateCreateInfo viewportState{};
+        viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        viewportState.viewportCount = 1;
+        viewportState.pViewports = &viewport;
+        viewportState.scissorCount = 1;
+        viewportState.pScissors = &scissor;
+
+
+        // rasterizer
+        VkPipelineRasterizationStateCreateInfo rasterizer{};
+        rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+        rasterizer.depthClampEnable = VK_FALSE; // if enabled then fragments which are outside the depth of the view frustum are truncated to the frustum (outside near / far planes are clamped to the planes)
+        rasterizer.rasterizerDiscardEnable = VK_FALSE;
+        rasterizer.polygonMode = VK_POLYGON_MODE_FILL; // includes lines and points - lines can be used for wireframe debugging
+        // ^ any mode other than fill, like lines, requires an extension
+        rasterizer.lineWidth = 1.0f; // range availability based on physical device support
+        // ^ widths other than 1 require extension
+        rasterizer.cullMode = VK_CULL_MODE_BACK_BIT; // see other cull modes when typing VK_CULL_MODE
+        // specify vertex face direction order
+        rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+        // unsure what the following 3 do yet
+        rasterizer.depthBiasEnable = VK_FALSE; // sometimes used for shadow mapping
+        rasterizer.depthBiasClamp = 0.0f;
+        rasterizer.depthBiasSlopeFactor = 0.0f;
+
+
+        // multisampling - one way to antialias
+        // disabled for now - to be revisited - no comments
+        VkPipelineMultisampleStateCreateInfo multisampling{};
+        multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+        multisampling.sampleShadingEnable = VK_FALSE;
+        multisampling.sampleShadingEnable = VK_FALSE;
+        multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+        multisampling.minSampleShading = 1.0f;
+        multisampling.pSampleMask = nullptr;
+        multisampling.alphaToCoverageEnable = VK_FALSE;
+        multisampling.alphaToOneEnable = VK_FALSE;
+
         vkDestroyShaderModule(device, fragShaderModule, nullptr);
         vkDestroyShaderModule(device, vertShaderModule, nullptr);
+
+
+        // no depth / stencil testing yet, later for shadows
+
+
+        // color blending
+        VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+        colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT; // let all color pass through
+        colorBlendAttachment.blendEnable = VK_FALSE; // cannot be true with other blending mode below at same time
+        // this blending is disabled but if we were to implement it we could use the following
+        colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; // full weight to source, overwrite old swapchain buffer image entirely in this case
+        colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; // no weight given to image already there - not zero if this were a pass that goes after another for a single render cycle
+        colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD; // you could draw light shafts with this, or bloom
+        colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+        colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD; // may be able to use for something else
+
+        // populate color blend state struct
+        VkPipelineColorBlendStateCreateInfo colorBlending{};
+        colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+        colorBlending.logicOpEnable = VK_FALSE; // this is if we were to use the other method of blending (bitwise combination)
+        // !! if we were to toggle this ^ to be true then it disables the other blending mode
+        colorBlending.logicOp = VK_LOGIC_OP_COPY;
+        colorBlending.attachmentCount = 1;
+        colorBlending.pAttachments = &colorBlendAttachment; // link other populated struct above
+        colorBlending.blendConstants[0] = 0.0f;
+        colorBlending.blendConstants[1] = 0.0f;
+        colorBlending.blendConstants[2] = 0.0f;
+        colorBlending.blendConstants[3] = 0.0f;
+
+
+        // Dynamic state - not much
+        VkDynamicState dynamicStates[] = {
+            VK_DYNAMIC_STATE_VIEWPORT,
+            VK_DYNAMIC_STATE_LINE_WIDTH
+        };
+
+        VkPipelineDynamicStateCreateInfo dynamicState{};
+        dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        dynamicState.dynamicStateCount = 2;
+        dynamicState.pDynamicStates = dynamicStates;
+
+
+        // pipeline layout includes uniform values for shaders like transformations for rendering and instanced rendering
+        // currently not used
+        VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+        pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipelineLayoutInfo.setLayoutCount = 0; // not yet utilized
+        pipelineLayoutInfo.pSetLayouts = nullptr; // ''
+        pipelineLayoutInfo.pushConstantRangeCount = 0; // ''
+        pipelineLayoutInfo.pPushConstantRanges = nullptr; // ''
+
+
     }
 
     // VKShaderModule - light wrapper over shader bytecode for pipeline creation
