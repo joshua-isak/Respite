@@ -10,14 +10,14 @@
 // Engine stuff
 #include "entity.h"
 #include "level.h"
-#include "window.h"
-#include "world.h"
+//#include "window.h"
+//include "world.h"
 
 // Respite game stuff, should ideally not be here
 #include "respite/respite.h"
 
 // EXTERN MANAGERS
-#include "managers.h"
+#include "engine/src/managers/managers.h"
 
 using namespace std;
 
