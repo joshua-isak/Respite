@@ -1,18 +1,46 @@
 Idea for factoring vulkan into a subsytem of the engine -
+
 instanced rendering
+
+
 use a model loader,
 index the models,
-do vertex shading per instance (transforms) but have them reference the same vertex data in the end
 
-
-have a mesh class provided by engine
-have loader utility provided by the engine to produce mesh classes from files
-
-mesh classes can be linked list which, when application has loaded all relevant models, can be compiled from the head for instanced rendering into an instances class
-this instances class will contain all of the indexing so the application can queue renders for given pass with ease
 
 
 have lights with shadows which can be created as instances of an engine light class
-these light classes must all be added at the init of a stage, and then be baked -
+these light classes must all be added to renderer class at the init of a stage
 all static objects are shadow mapped
 then to render everything realtime, run each of the shadow passes but only with the dynamic objects, combine with the static previously rendered image and then proceed to render the scene with lighting
+
+
+bake models together, bake shadow passes etc at init, then run everything
+
+
+
+Loader
+
+
+Loader loader;
+
+
+// game is setting up game
+// file path
+loader.load('tree');
+
+loader.load(set of terrain data);
+
+
+
+
+box -> generate vertices
+
+
+*---*
+ \
+  \ 
+   \
+*   *
+
+
+

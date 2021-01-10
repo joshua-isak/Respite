@@ -48,6 +48,7 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 
 #include <optional>
 
+// queried from physical device
 struct QueueFamilyIndices {
     std::optional<uint32_t> graphicsFamily;// v
     std::optional<uint32_t> presentFamily; // these two may be the same queue for certain devices
@@ -57,6 +58,7 @@ struct QueueFamilyIndices {
     }
 };
 
+// surface size support, color format support, buffering support queried from physical device
 struct SwapChainSupportDetails {
     VkSurfaceCapabilitiesKHR capabilities;
     std::vector<VkSurfaceFormatKHR> formats;
@@ -65,7 +67,7 @@ struct SwapChainSupportDetails {
 
 
 #include <fstream>
-// binary file reader helper
+// binary file reader helper - for shaders
 static std::vector<char> readFile(const std::string& filename) {
     // ate - start from end of file - indicates filesize
     // binary - read as binary and do not make encoding transformations
@@ -98,11 +100,23 @@ public:
 
 private:
     GLFWwindow* window; // manual destroy
+
+
     VkInstance instance; // manual destroy
+
+
+
     VkDebugUtilsMessengerEXT debugMessenger; // manual destroy
-    VkSurfaceKHR surface; // manual destroy - Vulkan window interface extension surface
+    VkSurfaceKHR surface; // manual destroy - Vulkan window system interface extension surface
+
+
+
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE; // implicit destruction with destruction of instance
+
     VkDevice device; // logical device to interface with the physical device - destroy manually
+
+
+
     VkQueue presentQueue; // queue to control presentation of rendered data (swap chain stuff)
     VkQueue graphicsQueue;
     VkSwapchainKHR swapChain; // destroy before logical device (created with logical device)
@@ -110,6 +124,8 @@ private:
     VkFormat swapChainImageFormat; // image format we will chose for swapchain based on our preference
     VkExtent2D swapChainExtent; // swapchain image extent we will have selected based on the constraints
     std::vector<VkImageView> swapChainImageViews; // allocated and managed by us. destroy before destruction of logical device
+
+
 
     VkRenderPass renderPass; // must be destroyed before logical device destruction
     VkPipelineLayout pipelineLayout; // destroy at end of program before logical device
@@ -133,10 +149,14 @@ private:
 
     void initVulkan() {
         createInstance();
+
         setupDebugMessenger();
         createSurface();
+       
         pickPhysicalDevice();
+
         createLogicalDevice();
+
         createSwapChain();
         createImageViews();
 
@@ -193,7 +213,7 @@ private:
 
 
 
-        // retrieve list of all supported extensions
+        /* retrieve list of all supported extensions
         uint32_t extensionCount = 0;
         // get amount of extensions
         vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
@@ -205,7 +225,7 @@ private:
         std::cout << "available extensions:\n";
         for (std::vector<VkExtensionProperties>::iterator it = allExtensionsList.begin(); it != allExtensionsList.end(); ++it) {
             std::cout << '\t' << it->extensionName << '\n';
-        }
+        }*/
 
 
 
@@ -294,9 +314,9 @@ private:
     const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
     void* pUserData) {
         if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-            std::cerr << "severe warning - validation layer: " << pCallbackData->pMessage << std::endl;
+            std::cerr << "severe warning: " << pCallbackData->pMessage << std::endl;
         } else {
-            std::cerr << "info - validation layer: " << pCallbackData->pMessage << std::endl;
+            std::cerr << "info: " << pCallbackData->pMessage << std::endl;
         }
 
         return VK_FALSE;
@@ -311,12 +331,16 @@ private:
     void pickPhysicalDevice() {
         // first enumerate devices, record amount
         uint32_t deviceCount = 0;
+
         vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+
         if (deviceCount == 0) {
             throw std::runtime_error("failed to find GPUs with Vulkan support!");
         }
+
         // populate dynamic size array of devices with amount / info specified via vulkan fn
         std::vector<VkPhysicalDevice> devices(deviceCount);
+
         vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
         // check if we have a device that meets our requirements. choose the first such
@@ -326,11 +350,14 @@ private:
                 break;
             }
         }
+
         // if there are none, throw error.
         if (physicalDevice == VK_NULL_HANDLE) {
             throw std::runtime_error("failed to find a suitable GPU!");
         }
     }
+
+
 
     // extend as features are required
     bool isDeviceSuitable(VkPhysicalDevice device) {
@@ -371,17 +398,26 @@ private:
         // cycle through the results and compare to hard-coded requirements based on eventual render usage
         int i = 0;
         for (const auto& queueFamily : queueFamilies) {
+            //std::cout << "queue flags: " << queueFamily.queueFlags << "\n";
+            // the queue families on my card are each flagged gfx, compute, transfer
+            // some are also flagged sparse binding
+            // there are 8 queue families on my card. 4 have present capabilities.
+            // is it important to utilize multiple queues?
+            // transfer queue - should this be used for buffering?
+
             if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
                 indices.graphicsFamily = i;
             }
 
             VkBool32 presentSupport = false;
-            // can the surface be presented to from the device?
+            // can the surface be presented to from this queue on the device?
             vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
             if (presentSupport) {
                 indices.presentFamily = i;
+                //std::cout << "queue has present capabilities\n\n";
             }
 
+            // can comment out to query full capabilities
             if (indices.isComplete()) {
                 break;
             }
@@ -406,7 +442,7 @@ private:
             requiredExtensions.erase(extension.extensionName);
         }
 
-        // any not supported, which are left?
+        // are any not supported, which are left?
         return requiredExtensions.empty();
     }
 
