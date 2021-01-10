@@ -12,7 +12,7 @@ public:
     float y = 0;        // y spatial coordinate
     float z = 0;        // z spatial coordinate
 
-    box collisionBox;   // Collision "hitbox"
+    box collision_box;   // Collision "hitbox"
 
 
     // Initialize the block (create its collisionBox)
@@ -21,7 +21,7 @@ public:
         y = set_y;
         z = set_y;
 
-        collisionBox.p_highest = { x + BLOCK_SIZE, y + BLOCK_SIZE, z + BLOCK_SIZE};
-        collisionBox.p_lowest = {x - BLOCK_SIZE, y - BLOCK_SIZE, z - BLOCK_SIZE};
+        collision_box.p_highest = { x + BLOCK_SIZE, y + BLOCK_SIZE, z + BLOCK_SIZE};
+        collision_box.p_lowest = {x - BLOCK_SIZE, y - BLOCK_SIZE, z - BLOCK_SIZE};
     };
 };

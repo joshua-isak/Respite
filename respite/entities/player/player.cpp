@@ -23,7 +23,7 @@ void Player::update() {
     if (window.getKeyState((int)'D') == KEY_PRESSED) { next_y += move_speed; }
 
     // Check if place to move to is not occupied
-    if (world.checkEntityCollision(this, next_x, y, z) == nullptr) { x = next_x; }
+    if (!world.checkIfCollision(this, next_x, y, z)) { x = next_x; }
 
-    if (world.checkEntityCollision(this, x, next_y, z) == nullptr) { y = next_y; }
+    if (!world.checkIfCollision(this, x, next_y, z)) { y = next_y; }
 }

@@ -13,8 +13,9 @@ public:
 
     bool persistent = false;    // set true to survive level changes
 
-    bool solid = false;         // set false to skip collision checking
-    box collision_box;           // Collision "hitbox". Defined by coordinates relative to entity's x,y,z
+    bool solid = false;             // set false to skip collision checking
+    box collision_box;              // Collision "hitbox". Defined by coordinates relative to entity's x,y,z
+    int collision_distance = 2;     // distance from object center to check for terrain collisions
 
     // Run every tick
     virtual void update();

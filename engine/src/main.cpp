@@ -56,8 +56,8 @@ int main(int argc, char *argv[]) {
 
     //////// CUSTOM GAME TEST CODE ////////
     Player *p = new Player;
-    p->x = 7;
-    p->y = 2;
+    p->x = 0;
+    p->y = 4;
     world.addEntity(1, p);
 
     Thing *t0 = new Thing;
@@ -72,6 +72,8 @@ int main(int argc, char *argv[]) {
     world.createBlock(0,1,0);
     world.createBlock(0,2,0);
     world.createBlock(0,3,0);
+
+    Block *b = world.terrain[point{0,0,0}];
 
     ///////////////////////////////////////
 
