@@ -3,7 +3,6 @@
 
 #pragma once
 
-using namespace std;
 
 class Level {
 public:

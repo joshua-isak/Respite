@@ -4,7 +4,8 @@
 #include <iostream>
 
 Thing::Thing() {
-    collisionBox = {{1,1,1}, {-1,-1,-1}};
+    collision_box = {{1,1,1}, {-1,-1,-1}};
+    solid = true;
 }
 
 void Thing::update() {
