@@ -56,8 +56,8 @@ int main(int argc, char *argv[]) {
 
     //////// CUSTOM GAME TEST CODE ////////
     Player *p = new Player;
-    p->x = 2;
-    p->y = 2;
+    p->pos.x = 2;
+    p->pos.y = 2;
     world.addEntity(1, p);
 
     Thing *t = new Thing;

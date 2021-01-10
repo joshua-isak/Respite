@@ -7,10 +7,10 @@ void Level0::init() {
 
     Player *p = new Player;
 
-    p->x = 7;
-    p->y = 9;
+    p->pos.x = 7;
+    p->pos.y = 9;
 
-    printf("x:%f y:%f\n", p->x, p->y);
+    printf("x:%f y:%f\n", p->pos.x, p->pos.y);
 
     addEntity(p);
 
