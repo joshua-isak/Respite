@@ -105,6 +105,7 @@ Entity* World::checkEntityCollision(Entity *self, float x_pos, float y_pos, floa
                     self->collision_box.p_lowest.z + z_pos   };
 
 
+
     // Iterate through all entities in the world and check if self is colliding with any of them
     map<int, Entity*>::iterator it;
 
@@ -117,6 +118,7 @@ Entity* World::checkEntityCollision(Entity *self, float x_pos, float y_pos, floa
 
         // Don't check for a collision with ourselves
         if (other == self) { continue; }
+
 
         point b_max = { other->collision_box.p_highest.x + other->x,
                         other->collision_box.p_highest.y + other->y,

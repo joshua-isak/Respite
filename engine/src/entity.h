@@ -2,6 +2,10 @@
 
 #include "point.h"
 
+
+// A rectuangular prism defined by 2 points in 3D space
+
+
 // Object that exists in a level and is updated once per tick
 class Entity {
 public:
@@ -10,6 +14,7 @@ public:
     float x = 0;        // x spatial coordinate
     float y = 0;        // y spatial coordinate
     float z = 0;        // z spatial coordinate
+
 
     bool persistent = false;    // set true to survive level changes
 

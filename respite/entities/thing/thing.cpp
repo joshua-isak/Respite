@@ -10,7 +10,7 @@ Thing::Thing() {
 
 void Thing::update() {
     // Check if anything is colliding with self
-    if (world.checkEntityCollision(this, x, y, z) != nullptr) {
+    if (world.checkEntityCollision(this, pos.x, pos.y, pos.z) != nullptr) {
         printf("Something is colliding with me!!!");
     }
 }

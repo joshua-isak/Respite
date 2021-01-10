@@ -10,11 +10,11 @@ Player::Player() {
 
 void Player::update() {
     // Print current x y coordinates
-    printf("Pos x: %f, y:%f\n", x, y);
+    printf("Pos x: %f, y:%f\n", pos.x, pos.y);
 
-    float next_x = x;
-    float next_y = y;
-    float next_z = z;
+    float next_x = pos.x;
+    float next_y = pos.y;
+    float next_z = pos.z;
 
     // Process movement input
     if (window.getKeyState((int)'W') == KEY_PRESSED) { next_x -= move_speed; }
@@ -26,4 +26,5 @@ void Player::update() {
     if (!world.checkIfCollision(this, next_x, y, z)) { x = next_x; }
 
     if (!world.checkIfCollision(this, x, next_y, z)) { y = next_y; }
+
 }
