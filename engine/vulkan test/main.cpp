@@ -104,6 +104,7 @@ private:
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE; // implicit destruction with destruction of instance
     VkDevice device; // logical device to interface with the physical device - destroy manually
     VkQueue presentQueue; // queue to control presentation of rendered data (swap chain stuff)
+    VkQueue graphicsQueue;
     VkSwapchainKHR swapChain; // destroy before logical device (created with logical device)
     std::vector<VkImage> swapChainImages; // automatically cleaned when the swap chain is destoryed
     VkFormat swapChainImageFormat; // image format we will chose for swapchain based on our preference
@@ -117,6 +118,9 @@ private:
     std::vector<VkFramebuffer> swapChainFramebuffers; // destroy after we finish all our drawing at end
     VkCommandPool commandPool;
     std::vector<VkCommandBuffer> commandBuffers; // in this implementation, the buffers are comprised of the same commands except for the one which binds drawing to the correct swapchain image at the correct time
+    VkSemaphore imageAvailableSemaphore;
+    VkSemaphore renderFinishedSemaphore;
+
 
     void initWindow() {
         glfwInit();
@@ -142,6 +146,7 @@ private:
         createFramebuffers();
         createCommandPool();
         createCommandBuffers();
+        createSemaphores();
     }
 
     void createInstance() {
@@ -454,6 +459,7 @@ private:
         // there's only one possible queue we requested that we can retrieve form the logical device for the presentation family
         // so the index is 0
         vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
+        vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
     }
 
 
@@ -681,6 +687,19 @@ private:
         renderPassInfo.pAttachments = &colorAttachment;
         renderPassInfo.subpassCount = 1;
         renderPassInfo.pSubpasses = &subpass;
+
+
+        VkSubpassDependency dependency{};
+        dependency.srcSubpass = VK_SUBPASS_EXTERNAL; // refers to implicit subpass preceding (as value set for srcsubpass not dest)
+        dependency.dstSubpass = 0;
+        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT; // wait on color attachment stage
+        dependency.srcAccessMask = 0;
+        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+        renderPassInfo.dependencyCount = 1;
+        renderPassInfo.pDependencies = &dependency;
+
 
         if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
             throw std::runtime_error("failed to create render pass!");
@@ -1000,16 +1019,71 @@ private:
     }
 
 
+    void createSemaphores() {
+        VkSemaphoreCreateInfo semaphoreInfo{};
+        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
+        if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphore) != VK_SUCCESS || vkCreateSemaphore(devicef, &semaphoreInfo, nullptr, &renderFinishedSemaphore) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create semaphores!");
+        }
+    }
 
 
     void mainLoop() {
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
+            drawFrame();
         }
     }
 
+    void drawFrame() {
+        uint32_t imageIndex; // corresponds to swapchain image. used to signal which corresponding command buffer should be submitted
+        // imageAvailableSemaphore signaled after image has finished being presented via its own queued command buffer preceding the current to be submitted
+        vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+        VkSemaphore waitSemaphores[] = {imageAvailableSemaphore};
+        VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT}; // wait after vertex shader, before fragment / rasterization to image
+        submitInfo.waitSemaphoreCount = 1;
+        submitInfo.pWaitSemaphores = waitSemaphores;
+        submitInfo.pWaitDstStageMask = waitStages;
+
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
+
+        VkSemaphore signalSemaphores[] = {renderFinishedSemaphore};
+        submitInfo.signalSemaphoreCount = 1;
+        submitInfo.pSignalSemaphores = signalSemaphores;
+
+        if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
+            throw std::runtime_error("failed to submit draw command buffer!");
+        }
+
+
+        VkPresentInfoKHR presentInfo{};
+        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pWaitSemaphores = signalSemaphores;
+
+        VkSwapchainKHR swapChains[] = {swapChain};
+        presentInfo.swapchainCount = 1;
+        presentInfo.pSwapchains = swapChains;
+        presentInfo.pImageIndices = &imageIndex;
+
+        presentInfo.pResults = nullptr;
+
+        vkQueuePresentKHR(presentQueue, &presentInfo);
+    }
+
     void cleanup() {
+
+        // all commands finished and no more sync necessary (app over)
+        vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
+        vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
+
         vkDestroyCommandPool(device, commandPool, nullptr);
 
         for (auto framebuffer : swapChainFramebuffers) {
