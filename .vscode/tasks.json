@@ -22,7 +22,7 @@
         },
         {
 			"type": "cppbuild",
-			"label": "build engine",
+			"label": "build entire game",
 			"command": "C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/g++.exe",
 			"args": [
                 "-g",
@@ -32,9 +32,10 @@
 				"-I.",
 				
                 "engine/src/entity.cpp",
-                "engine/src/level.cpp",
+				"engine/src/level.cpp",
+				"engine/src/world.cpp",
                 "engine/src/main.cpp",
-				"engine/src/window.cpp",
+                "engine/src/window.cpp",
 				
 				"-L./engine/lib",
 
@@ -43,7 +44,8 @@
 				"-lgdi32",
 				
                 "respite/entities/player/player.cpp",
-				"respite/levels/level0/level0.cpp",
+				"respite/entities/thing/thing.cpp",
+                "respite/levels/level0/level0.cpp",
 				
                 "-o",
                 "respite.exe"
