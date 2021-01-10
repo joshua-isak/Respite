@@ -1,5 +1,5 @@
 #pragma once
-#include <engine/lib/glm-master/glm/glm.hpp>
+#include <engine/lib/glm/glm.hpp>
 
 // A rectuangular prism defined by 2 points in 3D space
 struct box {

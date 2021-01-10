@@ -10,8 +10,8 @@
 
 #include <cstdint> // max value of uint32_t
 
-const uint32_t WIDTH = 800;
-const uint32_t HEIGHT = 600;
+const uint32_t WIDTH = 1600;
+const uint32_t HEIGHT = 1200;
 
 const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
@@ -117,7 +117,7 @@ private:
 
     std::vector<VkFramebuffer> swapChainFramebuffers; // destroy after we finish all our drawing at end
     VkCommandPool commandPool;
-    std::vector<VkCommandBuffer> commandBuffers; // in this implementation, the buffers are comprised of the same commands except for the one which binds drawing to the correct swapchain image at the correct time
+    std::vector<VkCommandBuffer> commandBuffers; // in this implementation, the buffers are comprised of the same commands except for the one which binds drawing to the select corresponding swapchain image at the correct time
     VkSemaphore imageAvailableSemaphore;
     VkSemaphore renderFinishedSemaphore;
 
@@ -706,7 +706,7 @@ private:
         }
     }
 
-
+    // compiles shaders and creates pipeline
     void createGraphicsPipeline() {
         // programmable part of pipeline specification
         auto vertShaderCode = readFile("shaders/vert.spv");
