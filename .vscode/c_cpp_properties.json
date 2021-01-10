@@ -12,8 +12,9 @@
             ],
             "compilerPath": "C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/g++.exe",
             "cStandard": "gnu17",
-            "cppStandard": "gnu++17",
-            "intelliSenseMode": "gcc-x86"
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "gcc-x64"
+
         },
         {
             "name": "UNIX",
@@ -30,10 +31,10 @@
             "cppStandard": "gnu++14",
             "intelliSenseMode": "gcc-x64",
             "compilerArgs": [],
-            "intelliSenseModeIsExplicit": true,
-            "cStandardIsExplicit": true,
-            "cppStandardIsExplicit": true,
-            "compilerPathIsExplicit": true,
+            //"intelliSenseModeIsExplicit": true,
+            //"cStandardIsExplicit": true,
+            //"cppStandardIsExplicit": true,
+            //"compilerPathIsExplicit": true,
             "browse": {
                 "path": [
                     "${workspaceFolder}/**"

@@ -1,22 +1,26 @@
 #pragma once
-#include <engine/lib/glm/glm.hpp>
+
+#include "point.h"
+
 
 // A rectuangular prism defined by 2 points in 3D space
-struct box {
-    glm::vec3 p_highest;
-    glm::vec3 p_lowest;
-};
 
 
 // Object that exists in a level and is updated once per tick
 class Entity {
 public:
     int id = 0;         // unique runtime id
-    glm::vec3 pos;
 
-    bool persistent;    // True to survive level changes
+    float x = 0;        // x spatial coordinate
+    float y = 0;        // y spatial coordinate
+    float z = 0;        // z spatial coordinate
 
-    box collisionBox;   // Collision "hitbox". Defined by coordinates relative to entity's x,y,z
+
+    bool persistent = false;    // set true to survive level changes
+
+    bool solid = false;             // set false to skip collision checking
+    box collision_box;              // Collision "hitbox". Defined by coordinates relative to entity's x,y,z
+    int collision_distance = 2;     // distance from object center to check for terrain collisions
 
     // Run every tick
     virtual void update();

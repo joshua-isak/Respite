@@ -3,12 +3,11 @@
 
 #pragma once
 
-using namespace std;
 
 class Level {
 public:
 
-    list <Entity*> entities;    // List of all entities in a level
+    std::list <Entity*> entities;    // List of all entities in a level
 
     // Run once when level is first created
     virtual void init();

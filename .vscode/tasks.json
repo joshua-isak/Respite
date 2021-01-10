@@ -36,7 +36,8 @@
                 "-lgdi32",
 				"respite/entities/player/player.cpp",
 				"respite/entities/thing/thing.cpp",
-                "respite/levels/level0/level0.cpp",
+				"respite/levels/level0/level0.cpp",
+				"-static",
                 "-o",
                 "respite.exe"
 
