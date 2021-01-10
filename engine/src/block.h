@@ -1,18 +1,29 @@
 #pragma once
 
-#include "point.h"
+#define BLOCK_SIZE 1   // Box size multiplier, 1 yields 2x2, 2 is 4x4, 3 is 6x6
+
+// A point in 3D space
+struct point {
+    float x = 0;
+    float y = 0;
+    float z = 0;
+};
+
+// A rectuangular prism defined by 3 points in 3D space
+struct box {
+    point p_highest;
+    point p_lowest;
+};
 
 
 // Square block that makes up 1 terrain unit in a level
 class Block {
 public:
-    float BLOCK_SIZE = 0.5;     // Box size multiplier, 1 yields 2x2, 2 is 4x4, 3 is 6x6
-
     float x = 0;        // x spatial coordinate
     float y = 0;        // y spatial coordinate
     float z = 0;        // z spatial coordinate
 
-    box collision_box;   // Collision "hitbox"
+    box collisionBox;   // Collision "hitbox"
 
 
     // Initialize the block (create its collisionBox)
@@ -21,7 +32,7 @@ public:
         y = set_y;
         z = set_y;
 
-        collision_box.p_highest = { x + BLOCK_SIZE, y + BLOCK_SIZE, z + BLOCK_SIZE};
-        collision_box.p_lowest = {x - BLOCK_SIZE, y - BLOCK_SIZE, z - BLOCK_SIZE};
+        collisionBox.p_highest = { x + BLOCK_SIZE, y + BLOCK_SIZE, z + BLOCK_SIZE};
+        collisionBox.p_lowest = {x - BLOCK_SIZE, y - BLOCK_SIZE, z - BLOCK_SIZE};
     };
 };

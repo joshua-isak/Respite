@@ -4,8 +4,7 @@
 #include <iostream>
 
 Player::Player() {
-    collision_box = {{1,1,1}, {-1,-1,-1}};
-    solid = true;
+    collisionBox = {{1,1,1}, {-1,-1,-1}};
 }
 
 void Player::update() {
@@ -23,8 +22,9 @@ void Player::update() {
     if (window.getKeyState((int)'D') == KEY_PRESSED) { next_y += move_speed; }
 
     // Check if place to move to is not occupied
-    if (!world.checkIfCollision(this, next_x, y, z)) { x = next_x; }
-
-    if (!world.checkIfCollision(this, x, next_y, z)) { y = next_y; }
-
+    if (world.checkEntityCollision(this, next_x, next_y, next_z) == nullptr) {
+        pos.x = next_x;
+        pos.y = next_y;
+        pos.z = next_z;
+    }
 }

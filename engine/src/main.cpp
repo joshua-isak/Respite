@@ -50,31 +50,18 @@ int main(int argc, char *argv[]) {
     bool running = true;        // current engine state (false breaks main game loop)
 
     // Initialize Managers
-    window.init(640, 480, "Respite", &running);
+    window.init(640, 480, "Respite");
     world.init();
 
 
     //////// CUSTOM GAME TEST CODE ////////
     Player *p = new Player;
-    p->x = 0;
-    p->y = 4;
+    p->pos.x = 2;
+    p->pos.y = 2;
     world.addEntity(1, p);
 
-    Thing *t0 = new Thing;
-    t0->x = 10;
-    world.addEntity(2, t0);
-
-    // Thing *t1 = new Thing;
-    // t1->y = 2;
-    // world.addEntity(3, t1);
-
-    world.createBlock(0,0,0);
-    world.createBlock(0,1,0);
-    world.createBlock(0,2,0);
-    world.createBlock(0,3,0);
-
-    Block *b = world.terrain[point{0,0,0}];
-
+    Thing *t = new Thing;
+    world.addEntity(2, t);
     ///////////////////////////////////////
 
 
@@ -91,8 +78,7 @@ int main(int argc, char *argv[]) {
         this_thread::sleep_for(chrono::milliseconds(1000/tickrate));
     }
 
-    // Shutdown managers (reverse order from declarations)
-    world.destroy();
+    // Destroy the window manager
     window.destroy();
 
 }
